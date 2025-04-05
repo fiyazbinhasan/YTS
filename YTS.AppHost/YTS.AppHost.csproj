@@ -13,10 +13,13 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.AppHost" Version="9.1.0" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.Bun" Version="9.2.1" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.NodeJS.Extensions" Version="9.2.1" />
     <PackageReference Include="CommunityToolkit.Aspire.Hosting.Ollama" Version="9.2.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\YTS.McpServer\YTS.McpServer.csproj" />
     <ProjectReference Include="..\YTS.Web\YTS.Web.csproj" />
   </ItemGroup>
 

@@ -15,4 +15,16 @@ builder.AddProject<Projects.YTS_Web>("webfrontend")
     .WithReference(llama)
     .WaitFor(llama);
 
+builder.AddYarnApp("nextfrontend", "../yts-nextjs-app", "dev")
+    .WithYarnPackageInstallation()
+    .WithHttpEndpoint(env: "PORT")
+    .WithExternalHttpEndpoints();
+
+builder.AddViteApp("sveltefrontend", "../yts-svelte-app", "pnpm")
+    .WithPnpmPackageInstallation();
+
+builder.AddBunApp("nestjsfrontend", "../yts-nestjs-bun-app", "start")
+    .WithHttpEndpoint(env: "PORT")
+    .WithBunPackageInstallation();
+
 builder.Build().Run();
