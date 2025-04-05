@@ -8,8 +8,6 @@ builder.Services
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
-
 app.MapMcp();
 
 app.Run();

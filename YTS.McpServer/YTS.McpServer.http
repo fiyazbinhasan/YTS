@@ -1,6 +1,0 @@
-@YTS.McpServer_HostAddress = http://localhost:5062
-
-GET {{YTS.McpServer_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -1,24 +1,21 @@
 @page "/"
 @using Microsoft.Extensions.AI
+@using ModelContextProtocol
+@using ModelContextProtocol.Client
+@using ModelContextProtocol.Protocol.Transport
 @rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Chat</PageTitle>
 
-<h1>AI Chat demo</h1>
+<h1>MCP Chat Demo</h1>
 
 <fieldset>
     <legend>Model</legend>
     <InputRadioGroup @bind-Value="_selectedClient">
         <div>
             <label>
-                <InputRadio Value="@ServiceKeys.Deepseek" />
-                @_modelNames[ServiceKeys.Deepseek]
-            </label>
-        </div>
-        <div>
-            <label>
-                <InputRadio Value="@ServiceKeys.Llama" />
-                @_modelNames[ServiceKeys.Llama]
+                <InputRadio Value="@ServiceKeys.Mistral" />
+                @_modelNames[ServiceKeys.Mistral]
             </label>
         </div>
     </InputRadioGroup>
@@ -31,26 +28,21 @@
     private string _prompt = "";
     private string _response = "";
 
-    [Inject(Key = ServiceKeys.Deepseek)]
-    public required IChatClient Deepseek { get; set; }
-
-    [Inject(Key = ServiceKeys.Llama)]
-    public required IChatClient Llama { get; set; }
+    [Inject(Key = ServiceKeys.Mistral)]
+    public required IChatClient Mistral { get; set; }
 
     private readonly Dictionary<string, string> _modelNames = new()
     {
-        { ServiceKeys.Deepseek, "deepseek" },
-        { ServiceKeys.Llama, "llama" },
+        { ServiceKeys.Mistral, "mistral" }
     };
 
-    private string _selectedClient = ServiceKeys.Deepseek;
+    private string _selectedClient = ServiceKeys.Mistral;
 
     private async Task GetPrompt()
     {
         var client = _selectedClient switch
         {
-            ServiceKeys.Deepseek => Deepseek,
-            ServiceKeys.Llama => Llama,
+            ServiceKeys.Mistral => Mistral,
             _ => null
         };
 
@@ -65,7 +57,20 @@
             bool gotResponse = false;
             _response = "Asking Ollama...";
 
-            var stream = client.CompleteStreamingAsync(_prompt);
+            var mcpClient = await McpClientFactory.CreateAsync(new McpServerConfig
+            {
+                Id = "mcp-math-server",
+                Name = "MCP Math Server",
+                TransportType = TransportTypes.Sse,
+                Location = new("http://localhost:5062/sse")
+            });
+
+            var tools = await mcpClient.ListToolsAsync();
+
+            var stream = client.GetStreamingResponseAsync(_prompt, new ChatOptions
+            {
+                Tools = [..tools]
+            });
 
             await foreach (var answerToken in stream)
             {
