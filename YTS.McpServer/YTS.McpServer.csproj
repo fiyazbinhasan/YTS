@@ -10,4 +10,8 @@
     <PackageReference Include="ModelContextProtocol.AspNetCore" Version="0.1.0-preview.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Tools\" />
+  </ItemGroup>
+
 </Project>

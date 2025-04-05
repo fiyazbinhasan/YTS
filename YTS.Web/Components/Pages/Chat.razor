@@ -1,25 +1,12 @@
 @page "/"
 @using Microsoft.Extensions.AI
-@using ModelContextProtocol
-@using ModelContextProtocol.Client
-@using ModelContextProtocol.Protocol.Transport
+@using OllamaSharp.ModelContextProtocol
+@using OllamaSharp.ModelContextProtocol.Server
 @rendermode InteractiveServer
 
 <PageTitle>Chat</PageTitle>
 
 <h1>MCP Chat Demo</h1>
-
-<fieldset>
-    <legend>Model</legend>
-    <InputRadioGroup @bind-Value="_selectedClient">
-        <div>
-            <label>
-                <InputRadio Value="@ServiceKeys.Mistral" />
-                @_modelNames[ServiceKeys.Mistral]
-            </label>
-        </div>
-    </InputRadioGroup>
-</fieldset>
 
 <p><input type="text" @bind-value="_prompt" />&nbsp;<button @onclick="GetPrompt">Ask</button></p>
 <p>@_response</p>
@@ -31,43 +18,27 @@
     [Inject(Key = ServiceKeys.Mistral)]
     public required IChatClient Mistral { get; set; }
 
-    private readonly Dictionary<string, string> _modelNames = new()
-    {
-        { ServiceKeys.Mistral, "mistral" }
-    };
-
-    private string _selectedClient = ServiceKeys.Mistral;
-
     private async Task GetPrompt()
     {
-        var client = _selectedClient switch
-        {
-            ServiceKeys.Mistral => Mistral,
-            _ => null
-        };
-
         if (!string.IsNullOrWhiteSpace(_prompt))
         {
-            if (client is null)
-            {
-                _response = "No model selected";
-                return;
-            }
-
             bool gotResponse = false;
             _response = "Asking Ollama...";
 
-            var mcpClient = await McpClientFactory.CreateAsync(new McpServerConfig
+            var serverConfig = new McpServerConfiguration
             {
-                Id = "mcp-math-server",
-                Name = "MCP Math Server",
-                TransportType = TransportTypes.Sse,
-                Location = new("http://localhost:5062/sse")
-            });
+                Name = "Ollama Math MCP Server",
+                Command = "http://localhost:5062/sse",
+                TransportType = McpServerTransportType.Sse
+            };
 
-            var tools = await mcpClient.ListToolsAsync();
+            var mcpTools = await Tools.GetFromMcpServers(serverConfig);
 
-            var stream = client.GetStreamingResponseAsync(_prompt, new ChatOptions
+            var tools = mcpTools.Cast<McpClientTool>()
+                .Select(AITool (t) => new McpFunctionAdapter(t))
+                .ToList();
+
+            var stream = Mistral.GetStreamingResponseAsync(_prompt, new ChatOptions
             {
                 Tools = [..tools]
             });
