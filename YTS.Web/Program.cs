@@ -78,19 +78,19 @@ public class McpFunctionAdapter(McpClientTool mcpTool) : AIFunction
 
     public override IReadOnlyDictionary<string, object?> AdditionalProperties =>
         _mcpTool.Function?.Parameters?.Properties?.ToDictionary(
-            kvp => kvp.Key, object? (kvp) => new { kvp.Value.Type, kvp.Value.Description }
+            kvp => kvp.Key,
+            kvp => (object?)new { kvp.Value.Type, kvp.Value.Description }
         ) ?? new Dictionary<string, object?>();
 
-    public override JsonElement JsonSchema => GetJsonSchema();
-
-    public override JsonSerializerOptions JsonSerializerOptions => DefaultJsonSerializerOptions;
-
-    protected override async Task<object?> InvokeCoreAsync(IEnumerable<KeyValuePair<string, object?>> arguments,
-        CancellationToken cancellationToken)
+    protected override async ValueTask<object?> InvokeCoreAsync(AIFunctionArguments arguments, CancellationToken cancellationToken)
     {
         var argsDict = arguments.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
         return await _mcpTool.InvokeMethodAsync(argsDict);
     }
+
+    public override JsonElement JsonSchema => GetJsonSchema();
+
+    public override JsonSerializerOptions JsonSerializerOptions => DefaultJsonSerializerOptions;
 
     private JsonElement GetJsonSchema()
     {
@@ -103,7 +103,8 @@ public class McpFunctionAdapter(McpClientTool mcpTool) : AIFunction
         {
             type = _mcpTool.Function.Parameters.Type,
             properties = _mcpTool.Function.Parameters.Properties?.ToDictionary(
-                kvp => kvp.Key, object? (kvp) => new { type = kvp.Value.Type, description = kvp.Value.Description }
+                kvp => kvp.Key,
+                kvp => (object?)new { type = kvp.Value.Type, description = kvp.Value.Description }
             ) ?? new Dictionary<string, object?>(),
             required = _mcpTool.Function.Parameters.Required
         };
